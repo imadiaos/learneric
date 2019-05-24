@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context" xmlns:p="http://www.springframework.org/schema/p"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <context:component-scan base-package="com.imadiaos"/>
+
+    <import resource="dispatcher-servlet.xml"/>
+
+    <!-- todo 这里需要提取到配置文件，暂时提交测试。 -->
+    <bean id="redisConnectionFactory" class="org.springframework.data.redis.connection.jedis.JedisConnectionFactory"
+          p:host-name="localhost"
+          p:port="6379"/>
+    <bean id="redisMessageListener"
+          class="org.springframework.data.redis.listener.adapter.MessageListenerAdapter">
+        <constructor-arg>
+            <bean class="com.imadiaos.common.redis.RedisKeyExpiredMessageDelegate" />
+        </constructor-arg>
+    </bean>
+    <bean id="redisContainer"
+          class="org.springframework.data.redis.listener.RedisMessageListenerContainer">
+        <property name="connectionFactory" ref="redisConnectionFactory" />
+        <property name="messageListeners">
+            <map>
+                <entry key-ref="redisMessageListener">
+                    <list>
+                        <!--  <bean class="org.springframework.data.redis.listener.ChannelTopic">
+                            <constructor-arg value="__keyevent@1__:expired" /> </bean>  -->
+                        <!-- <bean class="org.springframework.data.redis.listener.PatternTopic">
+                            <constructor-arg value="*" /> </bean> -->
+                        <bean class="org.springframework.data.redis.listener.PatternTopic">
+                            <constructor-arg value="__key*__:expired" />
+                        </bean>
+                    </list>
+                </entry>
+            </map>
+        </property>
+    </bean>
+    <!-- redis template definition -->
+    <bean id="redisTemplate"
+          class="org.springframework.data.redis.core.RedisTemplate"
+          p:connection-factory-ref="redisConnectionFactory">
+        <!--		<property name="keySerializer">-->
+        <!--			<bean class="org.springframework.data.redis.serializer.StringRedisSerializer" />-->
+        <!--		</property>-->
+        <!--		<property name="valueSerializer">-->
+        <!--			<bean class="org.springframework.data.redis.serializer.StringRedisSerializer" />-->
+        <!--		</property>-->
+        <!--		<property name="hashKeySerializer">-->
+        <!--			<bean class="org.springframework.data.redis.serializer.StringRedisSerializer" />-->
+        <!--		</property>-->
+        <!--		<property name="hashValueSerializer">-->
+        <!--			<bean class="org.springframework.data.redis.serializer.StringRedisSerializer" />-->
+        <!--		</property>-->
+    </bean>
+
+</beans>
